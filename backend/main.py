@@ -1,3 +1,5 @@
+import os
+import json
 import firebase_admin
 from firebase_admin import credentials, firestore
 from fastapi import FastAPI, HTTPException, Query
@@ -16,11 +18,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-cred = credentials.Certificate("serviceAccountKey.json")
+# --- FIREBASE INITIALIZATION START ---
+# This looks for the secret we added in Render Environment Variables
+firebase_config_env = os.getenv("FIREBASE_CONFIG")
+
 if not firebase_admin._apps:
+    if firebase_config_env:
+        # PRODUCTION: Use the secret from Render
+        service_account_info = json.loads(firebase_config_env)
+        cred = credentials.Certificate(service_account_info)
+    else:
+        # LOCAL: Use your local file (for testing on your computer)
+        cred = credentials.Certificate("serviceAccountKey.json")
+    
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
+# --- FIREBASE INITIALIZATION END ---
 
 class Task(BaseModel):
     title: str
@@ -72,4 +86,6 @@ def delete_task(task_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    # Use 0.0.0.0 for deployment, 127.0.0.1 for local
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
