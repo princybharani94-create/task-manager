@@ -1,66 +1,72 @@
 import React from 'react';
-import { auth } from '../firebase'; // Import auth
-import { signOut } from "firebase/auth";
+import { auth } from '../firebase'; // Make sure this path is correct for your project
 
-const Sidebar = ({ setActiveTab }) => {
+const Sidebar = ({ activeTab, setActiveTab, isOpen, toggleSidebar }) => {
+  const sidebarWidth = '280px';
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      console.log("User signed out successfully");
-      // App.js usually handles the redirect back to Login automatically 
-      // if you're using an onAuthStateChanged listener.
+      await auth.signOut();
+      console.log("User logged out");
     } catch (error) {
-      console.error("Error signing out: ", error.message);
+      console.error("Error logging out: ", error);
     }
   };
 
-  return (
-    <div className="sidebar" style={sidebarStyle}>
-      <div>
-        <h2 style={{ marginBottom: '30px' }}>Task Manager</h2>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <button onClick={() => setActiveTab("tasks")} style={btnStyle}>📋 Tasks</button>
-          <button onClick={() => setActiveTab("completed")} style={btnStyle}>✅ Completed</button>
-          <button onClick={() => setActiveTab("profile")} style={btnStyle}>👤 Profile</button>
-        </nav>
-      </div>
+  const sidebarStyle = {
+    width: sidebarWidth,
+    height: '100vh',
+    background: '#1a252f', 
+    color: 'white',
+    position: 'fixed',
+    top: 0,
+    left: isOpen ? '0' : `-${sidebarWidth}`, 
+    transition: 'left 0.3s ease-in-out',
+    zIndex: 1000,
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '20px',
+  };
 
-      <button onClick={handleLogout} style={logoutBtnStyle}>
+  const navItemStyle = (tab) => ({
+    padding: '12px 15px',
+    cursor: 'pointer',
+    borderRadius: '8px',
+    marginBottom: '8px',
+    background: activeTab === tab ? '#34495e' : 'transparent',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '15px',
+    fontSize: '18px',
+    transition: 'background 0.2s',
+  });
+
+  return (
+    <div style={sidebarStyle}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '40px' }}>
+        <button 
+          onClick={toggleSidebar} 
+          style={{ background: 'transparent', color: 'white', border: 'none', fontSize: '28px', cursor: 'pointer', padding: 0 }}
+        >
+          ☰
+        </button>
+        <h3 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold' }}>Manager</h3>
+      </div>
+      
+      <div onClick={() => setActiveTab('tasks')} style={navItemStyle('tasks')}>📋 Tasks</div>
+      <div onClick={() => setActiveTab('completed')} style={navItemStyle('completed')}>✅ Completed</div>
+      <div onClick={() => setActiveTab('reminders')} style={navItemStyle('reminders')}>⏰ Reminders</div>
+      <div onClick={() => setActiveTab('profile')} style={navItemStyle('profile')}>👤 Profile</div>
+
+      {/* FIXED LOGOUT BUTTON */}
+      <div 
+        onClick={handleLogout} 
+        style={{ ...navItemStyle('logout'), color: '#e74c3c', marginTop: 'auto', fontWeight: 'bold' }}
+      >
         🚪 Log Out
-      </button>
+      </div>
     </div>
   );
-};
-
-// Simple inline styles to help with placement
-const sidebarStyle = {
-  width: '240px',
-  background: '#1a252f',
-  color: 'white',
-  height: '100vh',
-  padding: '20px',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between' // Pushes logout to the bottom
-};
-
-const btnStyle = {
-  background: 'none',
-  border: 'none',
-  color: 'white',
-  textAlign: 'left',
-  fontSize: '16px',
-  cursor: 'pointer',
-  padding: '10px'
-};
-
-const logoutBtnStyle = {
-  ...btnStyle,
-  color: '#e74c3c', // Red color for logout
-  fontWeight: 'bold',
-  borderTop: '1px solid #34495e',
-  paddingTop: '20px'
 };
 
 export default Sidebar;
